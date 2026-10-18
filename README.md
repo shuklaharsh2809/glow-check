@@ -48,6 +48,8 @@ Camera access requires HTTPS in production (localhost is the usual development e
 
 ## Deployment
 
+Vercel: this repository is connected to the `glow-check` Vercel project. Pushes to `main` can produce production deployments using the detected Vite settings. To deploy manually from an authenticated machine, run `vercel --prod`. The production site is available at [glow-check-mu.vercel.app](https://glow-check-mu.vercel.app). Local `.vercel` project metadata is intentionally ignored.
+
 Cloudflare Pages: connect the repository, use `npm run build` as the build command, and `dist` as the output directory. Add optional Vite environment variables only if analytics or a custom model location is needed.
 
 GitHub Pages: set `VITE_BASE_PATH=/repository-name/` in the build environment for a project site, run `npm run build`, and publish `dist/` with a Pages workflow. For a root user site, keep `/`. The app is a single screen with state-based navigation, so no rewrite rule is required.
