@@ -13,6 +13,8 @@ GlowCheck is a mobile-first photo-presentation experiment. It detects facial lan
 - Web Share with copy fallback, optional consent-gated analytics, and complete session reset
 - Responsive UI, keyboard focus states, reduced-motion support, and accessible status/error messages
 
+The landing-page model portrait is an original AI-generated project asset stored at `public/images/glowcheck-editorial-model.jpg`. It is labeled as an illustrative AI-generated example in the interface and does not depict a GlowCheck user or a real analysis result. No third-party stock photograph is used.
+
 ## Requirements and commands
 
 Node.js 20.19 or later (or Node.js 22.12 or later) is required by the pinned Vite toolchain.
