@@ -49,7 +49,9 @@ The default model and WASM files come from version-pinned Google Storage and jsD
 
 Photos are held via temporary object URLs and are never uploaded by application code. Names, ages, results, and landmarks are never sent to analytics or placed in browser persistence. Camera tracks stop after capture, cancellation, unmount, or reset. Reset revokes the current image URL and clears all React state.
 
-Analytics is disabled by default. To enable optional PostHog events, copy `.env.example` to `.env`, set `VITE_ENABLE_ANALYTICS=true`, and provide a public project key and host. Events are still sent only after the visitor opts in. Autocapture, pageview capture, session replay, persistent storage, and person profiles are disabled. The event property allowlist contains only `source`, `outcome`, `method`, and `error_code`. Do not add names, ages, image information, measurements, recommendation content, or identifiers. Provider quotas and terms can change; review the current PostHog plan before enabling it.
+Visitor counts come from Vercel Web Analytics (`<Analytics />` in `src/main.tsx`). It is cookieless, stores no personal identifiers, and receives only page views, referrers, country, and device type. Enable it under the project's Analytics tab in the Vercel dashboard; outside Vercel it does nothing.
+
+Product-event analytics is disabled by default. To enable optional PostHog events, copy `.env.example` to `.env`, set `VITE_ENABLE_ANALYTICS=true`, and provide a public project key and host. Events are still sent only after the visitor opts in. Autocapture, pageview capture, session replay, persistent storage, and person profiles are disabled. The event property allowlist contains only `source`, `outcome`, `method`, and `error_code`. Do not add names, ages, image information, measurements, recommendation content, or identifiers. Provider quotas and terms can change; review the current PostHog plan before enabling it.
 
 ## Camera and model troubleshooting
 
