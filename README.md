@@ -1,6 +1,6 @@
 # GlowCheck
 
-GlowCheck is a mobile-first photo-presentation experiment. It detects facial landmarks with MediaPipe in the browser and combines face framing with local Canvas brightness and edge-detail measurements. It then gives deterministic, practical photo and style suggestions. It does not judge attractiveness.
+GlowCheck is a mobile-first photo-appeal and glow-up experiment. It detects facial landmarks with MediaPipe in the browser and combines face framing with local Canvas brightness and edge-detail measurements. It uses those controllable conditions to estimate how attractively a portrait presents and provide deterministic photo and style suggestions.
 
 ## Features
 
@@ -8,7 +8,7 @@ GlowCheck is a mobile-first photo-presentation experiment. It detects facial lan
 - Guided front-camera capture with preview and retake controls
 - Lazy, local MediaPipe Face Landmarker inference, including no-face and multiple-face errors
 - Local brightness, sharpness, face position, occupancy, and framing measurements
-- Experimental Photo Presentation Score with a documented weighted formula
+- Experimental Photo Appeal Score with a documented weighted formula
 - Two included recommendations and three recommendations behind a simulated ₹5 unlock
 - Web Share with copy fallback, optional consent-gated analytics, and complete session reset
 - Responsive UI, keyboard focus states, reduced-motion support, and accessible status/error messages
@@ -60,6 +60,6 @@ No backend, database, authentication, payment provider, or paid AI service is ne
 
 ## Limitations and extensions
 
-Results depend on browser support, model availability, image quality, and landmark confidence. The score is experimental and not scientifically validated. Brightness is global rather than face-region exposure, sharpness can be affected by texture, and no 3D pose, hairstyle, clothing, skin, health, personality, demographic, or attractiveness inference is performed. General style cards are labeled as general suggestions.
+Results depend on browser support, model availability, image quality, and landmark confidence. The Photo Appeal Score is experimental and not scientifically validated. It estimates portrait presentation from framing, brightness, and sharpness; it does not objectively measure a person's face, body, worth, or fixed attractiveness. Brightness is global rather than face-region exposure, sharpness can be affected by texture, and no 3D pose, hairstyle, clothing, skin, health, personality, or demographic inference is performed. General style cards are labeled as general suggestions.
 
 Natural extensions include self-hosting model assets, calibrated pose estimation with documented camera assumptions, face-region light sampling, additional accessibility testing, and Playwright coverage against a locally served build. Any future analytics should preserve the current property allowlist and consent boundary.
