@@ -4,7 +4,7 @@ import type { AnalysisResult } from '../features/analysis/analysis.types';
 import { generateTips } from '../features/report/generateTips';
 import { ReportPage } from './ReportPage';
 
-const result: AnalysisResult = { faceDetected:true,faceCount:1,faceBoundingBox:{x:.2,y:.2,width:.4,height:.5},faceCenterX:.4,faceCenterY:.45,faceOccupancy:.2,headYawEstimate:null,headPitchEstimate:null,brightnessScore:55,sharpnessScore:75,framingScore:85,headPositionScore:null,photoPresentationScore:80 };
+const result: AnalysisResult = { faceDetected:true,faceCount:1,faceBoundingBox:{x:.2,y:.2,width:.4,height:.5},faceCenterX:.4,faceCenterY:.45,faceOccupancy:.2,headYawEstimate:null,headPitchEstimate:null,brightnessScore:55,sharpnessScore:75,framingScore:85,headPositionScore:null,photoPresentationScore:80,faceShape:'oval',facialSymmetryScore:86,featureBalanceScore:82,expressionScore:78,expressionTone:'warm',appearanceImpressionScore:83 };
 
 describe('premium report flow', () => {
   it('starts locked, opens the confirmation, and reveals tips after unlock', () => {

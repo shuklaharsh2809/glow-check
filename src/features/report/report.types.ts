@@ -1,4 +1,4 @@
-export type TipCategory = 'Lighting' | 'Framing' | 'Camera' | 'Grooming' | 'Style' | 'Wardrobe';
+export type TipCategory = 'Face shape' | 'Features' | 'Expression' | 'Hair' | 'Grooming' | 'Style' | 'Wardrobe';
 
 export interface Recommendation {
   id: string;

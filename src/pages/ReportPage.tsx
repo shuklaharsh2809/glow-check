@@ -7,13 +7,21 @@ import { trackEvent } from '../features/analytics/analytics';
 import type { AnalysisResult } from '../features/analysis/analysis.types';
 import type { Recommendations } from '../features/report/report.types';
 
-function label(value: number | null, good: (n: number) => boolean) { return value === null ? 'Unavailable' : good(value) ? 'Good' : 'Could improve'; }
 function appealLabel(score: number | null) {
   if (score === null) return 'More detail needed';
   if (score >= 85) return 'Exceptionally polished';
   if (score >= 70) return 'Naturally striking';
   if (score >= 55) return 'A strong foundation';
   return 'Ready to elevate';
+}
+function balanceLabel(score: number | null) {
+  if (score === null) return 'Best read front-on';
+  if (score >= 84) return 'Very balanced';
+  if (score >= 70) return 'Balanced';
+  return 'Naturally distinctive';
+}
+function expressionLabel(tone: AnalysisResult['expressionTone']) {
+  return tone === 'warm' ? 'Warm & engaging' : tone === 'soft' ? 'Soft & composed' : tone === 'neutral' ? 'Calm & neutral' : 'Unavailable';
 }
 
 export function ReportPage({ name, result, tips, unlocked, onUnlock, onReset }: { name: string; result: AnalysisResult; tips: Recommendations; unlocked: boolean; onUnlock: () => void; onReset: () => void }) {
@@ -22,16 +30,16 @@ export function ReportPage({ name, result, tips, unlocked, onUnlock, onReset }: 
   const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => { if (modal) closeRef.current?.focus(); }, [modal]);
   const share = async () => {
-    const text = `I used GlowCheck to explore my photo appeal and get ideas for looking my best. The score is based on framing, lighting, and clarity.`;
+    const text = `I used GlowCheck to explore how my appearance reads in a portrait and get personalized styling ideas. The result describes visible face shape, feature balance, and expression.`;
     const canShare = typeof navigator.share === 'function';
     try { if (canShare) await navigator.share({ title: 'My GlowCheck report', text }); else await navigator.clipboard.writeText(text); setShared(true); trackEvent('report_shared', { method: canShare ? 'web_share' : 'clipboard' }); } catch { /* User cancelled or clipboard unavailable. */ }
   };
   const open = () => { setModal(true); trackEvent('premium_clicked'); };
   return <main className="py-8 md:py-14">
-    <section className="relative grid overflow-hidden rounded-[2rem] bg-ink p-7 text-white shadow-luxe md:grid-cols-[1fr_auto] md:items-center md:p-12"><div className="orb orb-one"/><div className="relative"><p className="eyebrow !text-[#d9c2cf]">Your photo appeal</p><h1 className="mt-4 max-w-2xl font-display text-4xl leading-tight md:text-6xl">{appealLabel(result.photoPresentationScore)}.<br/><em className="font-normal text-[#d9c2cf]">Now elevate it, {name}.</em></h1><p className="mt-6 max-w-xl text-sm leading-7 text-white/55">GlowCheck estimates how attractive this portrait presents using controllable photo conditions, then shows what you can try next.</p><p className="mt-3 max-w-xl text-[.65rem] leading-5 text-white/35">The score reflects framing, light, and clarity. It is not an objective measurement of your face, body, worth, or fixed attractiveness.</p></div><div className="relative mt-8 text-center md:ml-12 md:mt-0"><ScoreRing score={result.photoPresentationScore}/><p className="mt-4 text-[.55rem] uppercase tracking-[.18em] text-white/35">Photo appeal score</p></div></section>
-    <section className="py-14"><div className="flex items-end justify-between"><div><p className="eyebrow">The composition</p><h2 className="mt-3 font-display text-4xl">What the camera noticed</h2></div></div><div className="mt-7 grid grid-cols-2 gap-3 md:grid-cols-4">{[
-      ['Framing', label(result.framingScore, n=>n>=65)], ['Lighting', label(result.brightnessScore, n=>n>=30&&n<=82)], ['Sharpness', label(result.sharpnessScore, n=>n>=42)], ['Head position', 'Not estimated']
-    ].map(([k,v],i)=><div key={k} className="rounded-[1.25rem] border border-black/[.08] bg-white/70 p-5 shadow-[0_12px_35px_rgba(55,34,45,.045)]"><div className="flex items-center justify-between"><p className="text-[.6rem] font-bold uppercase tracking-[.16em] text-black/35">{k}</p><span className="font-display text-black/15">0{i+1}</span></div><p className="mt-5 font-display text-xl">{v}</p></div>)}</div><p className="mt-5 max-w-3xl text-[.68rem] leading-5 text-black/40">Sharpness is a lightweight edge-detail heuristic, not a calibrated camera-quality measurement. Head angle is omitted because a reliable pose estimate is not available in this MVP.</p></section>
+    <section className="relative grid overflow-hidden rounded-[2rem] bg-ink p-7 text-white shadow-luxe md:grid-cols-[1fr_auto] md:items-center md:p-12"><div className="orb orb-one"/><div className="relative"><p className="eyebrow !text-[#d9c2cf]">Your appearance impression</p><h1 className="mt-4 max-w-2xl font-display text-4xl leading-tight md:text-6xl">{appealLabel(result.appearanceImpressionScore)}.<br/><em className="font-normal text-[#d9c2cf]">Now elevate it, {name}.</em></h1><p className="mt-6 max-w-xl text-sm leading-7 text-white/55">GlowCheck reads visible face shape, feature balance, symmetry, and expression to describe how your appearance comes across in this portrait.</p><p className="mt-3 max-w-xl text-[.65rem] leading-5 text-white/35">This is a subjective 2D impression from one image. Camera angle and expression can change the result; it does not define your worth or fixed attractiveness.</p></div><div className="relative mt-8 text-center md:ml-12 md:mt-0"><ScoreRing score={result.appearanceImpressionScore}/><p className="mt-4 text-[.55rem] uppercase tracking-[.18em] text-white/35">Appearance score</p></div></section>
+    <section className="py-14"><div className="flex items-end justify-between"><div><p className="eyebrow">Your visible features</p><h2 className="mt-3 font-display text-4xl">How your appearance reads</h2></div></div><div className="mt-7 grid grid-cols-2 gap-3 md:grid-cols-4">{[
+      ['Face shape', result.faceShape ? `${result.faceShape[0].toUpperCase()}${result.faceShape.slice(1)}` : 'Unavailable'], ['Feature spacing', balanceLabel(result.featureBalanceScore)], ['Facial balance', balanceLabel(result.facialSymmetryScore)], ['Expression', expressionLabel(result.expressionTone)]
+    ].map(([k,v],i)=><div key={k} className="rounded-[1.25rem] border border-black/[.08] bg-white/70 p-5 shadow-[0_12px_35px_rgba(55,34,45,.045)]"><div className="flex items-center justify-between"><p className="text-[.6rem] font-bold uppercase tracking-[.16em] text-black/35">{k}</p><span className="font-display text-black/15">0{i+1}</span></div><p className="mt-5 font-display text-xl">{v}</p></div>)}</div><p className="mt-5 max-w-3xl text-[.68rem] leading-5 text-black/40">Face shape and balance are approximate 2D readings from visible landmarks. Natural asymmetry is normal, and a different angle or expression may produce a different impression.</p></section>
     <section className="pb-14"><p className="eyebrow">Elevate your appeal</p><h2 className="mt-3 font-display text-4xl">Two ways to look even better</h2><p className="mt-3 max-w-xl text-sm leading-6 text-black/50">Start with the changes most supported by this portrait.</p><div className="mt-7 grid gap-4 md:grid-cols-2">{tips.free.map(t=><TipCard key={t.id} tip={t}/>)}</div></section>
     <section className="relative overflow-hidden rounded-[2rem] bg-ink p-6 text-white shadow-luxe md:p-10"><div className="orb orb-one"/><div className="relative flex flex-wrap items-end justify-between gap-5"><div><p className="eyebrow !text-[#d9c2cf]">The full glow-up · Demo premium</p><h2 className="mt-3 font-display text-4xl">Three more ways to look your best</h2><p className="mt-3 text-sm text-white/45">₹5 demo price · No money will be collected.</p></div>{!unlocked && <Button onClick={open} className="!bg-[#eadde4] !text-ink hover:!bg-white"><LockKeyhole className="mr-2 inline h-4 w-4"/>Unlock for ₹5</Button>}</div><div className="relative mt-8 grid gap-4 md:grid-cols-3">{tips.premium.map(t=><TipCard key={t.id} tip={t} locked={!unlocked}/>)}</div>{unlocked && <p role="status" className="relative mt-6 flex items-center gap-2 text-sm font-semibold text-[#d9c2cf]"><Check className="h-4 w-4"/>Demo report unlocked. No payment was made.</p>}</section>
     <div className="mt-8 flex flex-wrap gap-3"><Button variant="secondary" onClick={share}>{shared ? <Copy className="mr-2 inline h-4 w-4"/> : <Share2 className="mr-2 inline h-4 w-4"/>}{shared ? 'Copied or shared' : 'Share a private summary'}</Button><Button variant="ghost" onClick={onReset}><RotateCcw className="mr-2 inline h-4 w-4"/>Start again</Button></div>

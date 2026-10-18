@@ -1,14 +1,14 @@
 # GlowCheck
 
-GlowCheck is a mobile-first photo-appeal and glow-up experiment. It detects facial landmarks with MediaPipe in the browser and combines face framing with local Canvas brightness and edge-detail measurements. It uses those controllable conditions to estimate how attractively a portrait presents and provide deterministic photo and style suggestions.
+GlowCheck is a mobile-first appearance and glow-up experiment. It detects facial landmarks and expression blendshapes with MediaPipe in the browser, describes visible facial geometry, and provides deterministic hairstyle, grooming, expression, wardrobe, and styling suggestions.
 
 ## Features
 
 - In-memory first name and age flow; age does not affect analysis
 - Guided front-camera capture with preview and retake controls
 - Lazy, local MediaPipe Face Landmarker inference, including no-face and multiple-face errors
-- Local brightness, sharpness, face position, occupancy, and framing measurements
-- Experimental Photo Appeal Score with a documented weighted formula
+- Apparent face-shape, facial-symmetry, feature-spacing, and expression measurements
+- Experimental Appearance Impression Score with a documented weighted formula
 - Two included recommendations and three recommendations behind a simulated ₹5 unlock
 - Web Share with copy fallback, optional consent-gated analytics, and complete session reset
 - Responsive UI, keyboard focus states, reduced-motion support, and accessible status/error messages
@@ -32,9 +32,9 @@ The production output is in `dist/`.
 
 ## How analysis works
 
-The app lazily downloads the MediaPipe Tasks Vision WASM runtime and the version-1 float16 Face Landmarker task, then runs inference against the browser image element. It requests up to two faces so it can reject group images. Landmark extrema form a normalized face box; face size and centre produce framing quality. No raw landmarks are retained in app state.
+The app lazily downloads the MediaPipe Tasks Vision WASM runtime and the version-1 float16 Face Landmarker task, then runs inference against the browser image element. It requests up to two faces so it can reject group images. Selected documented landmark positions estimate the apparent face outline, side-to-side facial balance, and broad feature-spacing ranges. MediaPipe blendshapes provide the visible expression signal. No raw landmarks or blendshape arrays are retained in app state.
 
-Canvas downsizes the image to at most 360 pixels on its longest side for quality sampling. Luminance uses Rec. 709 coefficients. Sharpness uses normalized adjacent-pixel luminance gradients. This is a lightweight heuristic, not a calibrated camera-quality result. The score weights framing 40%, lighting 30%, and sharpness 30%; lighting is best in a conservative middle range. A score is shown only when all three measurements exist. Head angle is intentionally not estimated because the MVP does not implement calibrated pose solving.
+The Appearance Impression Score weights apparent symmetry 42%, broad feature balance 43%, and visible expression 15%. A score is omitted when the face is too turned for a reliable 2D balance reading. Canvas brightness and edge-detail checks remain available as internal photo-quality signals, but they do not determine the visible appearance score or recommendations. The score is a subjective product heuristic rather than a scientific measurement of attractiveness.
 
 The default model and WASM files come from version-pinned Google Storage and jsDelivr URLs. Override the model with `VITE_MEDIAPIPE_MODEL_URL`. A network failure produces a retryable error and never generates substitute results. For maximum operational control, self-host the matching WASM folder and model and change the URLs in `faceLandmarker.ts` and `.env`.
 
@@ -60,6 +60,6 @@ No backend, database, authentication, payment provider, or paid AI service is ne
 
 ## Limitations and extensions
 
-Results depend on browser support, model availability, image quality, and landmark confidence. The Photo Appeal Score is experimental and not scientifically validated. It estimates portrait presentation from framing, brightness, and sharpness; it does not objectively measure a person's face, body, worth, or fixed attractiveness. Brightness is global rather than face-region exposure, sharpness can be affected by texture, and no 3D pose, hairstyle, clothing, skin, health, personality, or demographic inference is performed. General style cards are labeled as general suggestions.
+Results depend on browser support, model availability, image quality, head angle, expression, and landmark confidence. The Appearance Impression Score is experimental and not scientifically validated. It describes visible 2D geometry in one portrait; it does not objectively define a person's attractiveness, body, health, personality, demographic identity, or worth. Face-shape categories are approximate, natural asymmetry is normal, and the app cannot see actual hair texture, clothing colour, or grooming detail. Suggestions outside measured geometry are clearly labeled as general.
 
-Natural extensions include self-hosting model assets, calibrated pose estimation with documented camera assumptions, face-region light sampling, additional accessibility testing, and Playwright coverage against a locally served build. Any future analytics should preserve the current property allowlist and consent boundary.
+Natural extensions include self-hosting model assets, calibrated 3D pose estimation with documented camera assumptions, user-selected style preferences, additional accessibility testing, and Playwright coverage against a locally served build. Any future analytics should preserve the current property allowlist and consent boundary.

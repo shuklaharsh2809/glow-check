@@ -1,6 +1,7 @@
 import type { FaceLandmarker as FaceLandmarkerType, NormalizedLandmark } from '@mediapipe/tasks-vision';
 import { calculatePresentationScore, framingFromBox } from './analysisRules';
 import { AnalysisError, type AnalysisResult } from './analysis.types';
+import { calculateAppearanceImpressionScore, estimateExpression, estimateFaceShape, estimateFacialSymmetry, estimateFeatureBalance } from './appearanceAnalysis';
 import { getQualityMetrics } from './imageQuality';
 
 const WASM_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22-rc.20250304/wasm';
@@ -19,6 +20,7 @@ async function getLandmarker() {
           numFaces: 2,
           minFaceDetectionConfidence: 0.55,
           minFacePresenceConfidence: 0.55,
+          outputFaceBlendshapes: true,
         });
       } catch (cause) {
         landmarkerPromise = null;
@@ -41,14 +43,19 @@ function boxFromLandmarks(points: NormalizedLandmark[]) {
 
 export async function analyzeImage(image: HTMLImageElement): Promise<AnalysisResult> {
   const model = await getLandmarker();
-  let landmarks: NormalizedLandmark[][];
-  try { landmarks = model.detect(image).faceLandmarks; }
+  let detection: ReturnType<FaceLandmarkerType['detect']>;
+  try { detection = model.detect(image); }
   catch (cause) { throw new AnalysisError('analysis-failed', 'The image could not be analyzed. Try another photo.', { cause }); }
+  const landmarks = detection.faceLandmarks;
   if (!landmarks.length) throw new AnalysisError('no-face', 'No clear face was found. Try a front-facing photo with even light.');
   if (landmarks.length > 1) throw new AnalysisError('multiple-faces', 'More than one face was found. Choose a photo with one clearly visible person.');
   const box = boxFromLandmarks(landmarks[0]);
   const quality = getQualityMetrics(image, image.naturalWidth, image.naturalHeight);
   const framingScore = framingFromBox(box);
+  const faceShape = estimateFaceShape(landmarks[0], image.naturalWidth, image.naturalHeight);
+  const facialSymmetryScore = estimateFacialSymmetry(landmarks[0], image.naturalWidth);
+  const featureBalanceScore = estimateFeatureBalance(landmarks[0], image.naturalWidth, image.naturalHeight);
+  const expression = estimateExpression(detection.faceBlendshapes[0]?.categories);
   const base: AnalysisResult = {
     faceDetected: true,
     faceCount: 1,
@@ -63,6 +70,12 @@ export async function analyzeImage(image: HTMLImageElement): Promise<AnalysisRes
     framingScore,
     headPositionScore: null,
     photoPresentationScore: null,
+    faceShape,
+    facialSymmetryScore,
+    featureBalanceScore,
+    expressionScore: expression.score,
+    expressionTone: expression.tone,
+    appearanceImpressionScore: calculateAppearanceImpressionScore(facialSymmetryScore, featureBalanceScore, expression.score),
   };
   return { ...base, photoPresentationScore: calculatePresentationScore(base) };
 }

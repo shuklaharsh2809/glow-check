@@ -1,7 +1,7 @@
-import { Camera, Lightbulb, Lock, Scissors, Shirt, Sparkles } from 'lucide-react';
+import { Heart, Lock, Scissors, Shirt, Smile, Sparkles, UserRound } from 'lucide-react';
 import type { Recommendation } from '../features/report/report.types';
 
-const icons = { Lighting: Lightbulb, Framing: Camera, Camera, Grooming: Scissors, Style: Sparkles, Wardrobe: Shirt };
+const icons = { 'Face shape': UserRound, Features: Heart, Expression: Smile, Hair: Scissors, Grooming: Sparkles, Style: Sparkles, Wardrobe: Shirt };
 
 export function TipCard({ tip, locked = false }: { tip: Recommendation; locked?: boolean }) {
   const Icon = icons[tip.category];

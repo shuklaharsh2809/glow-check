@@ -1,6 +1,8 @@
 export interface Point { x: number; y: number; z?: number }
 
 export interface FaceBox { x: number; y: number; width: number; height: number }
+export type FaceShape = 'oval' | 'round' | 'long' | 'angular';
+export type ExpressionTone = 'warm' | 'soft' | 'neutral';
 
 export interface AnalysisResult {
   faceDetected: boolean;
@@ -16,6 +18,12 @@ export interface AnalysisResult {
   framingScore: number | null;
   headPositionScore: number | null;
   photoPresentationScore: number | null;
+  faceShape: FaceShape | null;
+  facialSymmetryScore: number | null;
+  featureBalanceScore: number | null;
+  expressionScore: number | null;
+  expressionTone: ExpressionTone | null;
+  appearanceImpressionScore: number | null;
 }
 
 export type AnalysisErrorCode =
