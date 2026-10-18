@@ -5,7 +5,7 @@ GlowCheck is a mobile-first photo-presentation experiment. It detects facial lan
 ## Features
 
 - In-memory first name and age flow; age does not affect analysis
-- Front-camera capture and JPEG/PNG/WebP upload with validation
+- Guided front-camera capture with preview and retake controls
 - Lazy, local MediaPipe Face Landmarker inference, including no-face and multiple-face errors
 - Local brightness, sharpness, face position, occupancy, and framing measurements
 - Experimental Photo Presentation Score with a documented weighted formula
@@ -44,7 +44,7 @@ Analytics is disabled by default. To enable optional PostHog events, copy `.env.
 
 ## Camera and model troubleshooting
 
-Camera access requires HTTPS in production (localhost is the usual development exception). If access is denied, restore the site permission in browser settings or use upload. iOS browsers may pause the stream when the tab backgrounds; reopen the camera if needed. Content blockers, CSP rules, firewalls, or offline use can prevent CDN model downloads. Confirm that the model and WASM hosts are allowed, then retry.
+Camera access requires HTTPS in production (localhost is the usual development exception). If access is denied, restore the site permission in browser settings and retry. GlowCheck intentionally does not offer camera-roll upload. iOS browsers may pause the stream when the tab backgrounds; reopen the camera if needed. Content blockers, CSP rules, firewalls, or offline use can prevent CDN model downloads. Confirm that the model and WASM hosts are allowed, then retry.
 
 ## Deployment
 

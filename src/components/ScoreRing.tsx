@@ -1,6 +1,6 @@
 export function ScoreRing({ score }: { score: number | null }) {
-  if (score === null) return <div className="flex h-32 w-32 items-center justify-center rounded-full border-8 border-lilac text-center text-sm font-semibold">Not enough<br />information</div>;
-  return <div className="relative grid h-32 w-32 place-items-center rounded-full" style={{ background: `conic-gradient(#81719d ${score * 3.6}deg, #e8e2db 0)` }} aria-label={`Photo Presentation Score: ${score} out of 100`}>
-    <div className="grid h-24 w-24 place-items-center rounded-full bg-ivory"><span className="font-display text-4xl">{score}</span></div>
+  if (score === null) return <div className="flex h-36 w-36 items-center justify-center rounded-full border border-white/15 text-center text-xs font-semibold text-white/70">Not enough<br />information</div>;
+  return <div className="relative grid h-36 w-36 place-items-center rounded-full p-[1px]" style={{ background: `conic-gradient(#d9c2cf ${score * 3.6}deg, rgba(255,255,255,.1) 0)` }} aria-label={`Photo Presentation Score: ${score} out of 100`}>
+    <div className="grid h-[8.2rem] w-[8.2rem] place-items-center rounded-full bg-ink"><div className="text-center"><span className="font-display text-5xl text-white">{score}</span><p className="mt-1 text-[.5rem] uppercase tracking-[.18em] text-white/35">of 100</p></div></div>
   </div>;
 }
