@@ -1,4 +1,6 @@
-import type { AnalysisResult, FaceBox } from './analysis.types';
+import type { FaceBox } from './analysis.types';
+
+type Score = number | null;
 
 const valid = (n: number | null): n is number => n !== null && Number.isFinite(n) && n >= 0 && n <= 100;
 const clamp = (n: number) => Math.round(Math.max(0, Math.min(100, n)));
@@ -18,7 +20,7 @@ function lightingCondition(score: number) {
   return 1;
 }
 
-export function calculatePresentationScore(values: Pick<AnalysisResult, 'framingScore' | 'brightnessScore' | 'sharpnessScore' | 'headPositionScore'>): number | null {
+export function calculatePresentationScore(values: { framingScore: Score; brightnessScore: Score; sharpnessScore: Score; headPositionScore: Score }): number | null {
   const parts: Array<[number | null, number, (n: number) => number]> = [
     [values.framingScore, 0.4, (n) => n],
     [values.brightnessScore, 0.3, (n) => clamp(lightingCondition(n) * 100)],

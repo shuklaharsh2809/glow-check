@@ -1,22 +1,38 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { AnalysisResult } from '../features/analysis/analysis.types';
-import { generateTips } from '../features/report/generateTips';
+import { generateReport } from '../features/report/generateReport';
+import { canonicalLandmarks, resultFromLandmarks } from '../test/faceFixture';
 import { ReportPage } from './ReportPage';
 
-const result: AnalysisResult = { faceDetected:true,faceCount:1,faceBoundingBox:{x:.2,y:.2,width:.4,height:.5},faceCenterX:.4,faceCenterY:.45,faceOccupancy:.2,headYawEstimate:null,headPitchEstimate:null,brightnessScore:55,sharpnessScore:75,framingScore:85,headPositionScore:null,photoPresentationScore:80,faceShape:'oval',facialSymmetryScore:86,featureBalanceScore:82,expressionScore:78,expressionTone:'warm',appearanceImpressionScore:83 };
+const result = resultFromLandmarks(canonicalLandmarks(), { skin: { clarity: 60, evenness: 70, underEye: 65, score: 64 } });
+const report = generateReport(result, 26);
 
 describe('premium report flow', () => {
-  it('starts locked, opens the confirmation, and reveals tips after unlock', () => {
+  it('shows strengths and the free plan, then reveals locked content after the demo unlock', () => {
     const onUnlock = vi.fn();
-    const { rerender } = render(<ReportPage name="Sam" result={result} tips={generateTips(result)} unlocked={false} onUnlock={onUnlock} onReset={vi.fn()} />);
-    expect(screen.getAllByLabelText('Locked')).toHaveLength(3);
+    const props = { name: 'Sam', result, report, imageUrl: 'blob:portrait', onUnlock, onReset: vi.fn() };
+    const { rerender } = render(<ReportPage {...props} unlocked={false} />);
+    expect(screen.getByRole('heading', { name: /What makes your face attractive/ })).toBeInTheDocument();
+    expect(screen.getByText('High facial symmetry')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Harmony score: \d+ out of 100/)).toBeInTheDocument();
+    // Six locked measurements, every premium plan item, and the routine.
+    expect(screen.getAllByLabelText('Locked')).toHaveLength(6 + report.premium.length + 1);
+
     fireEvent.click(screen.getByRole('button', { name: /Unlock for/ }));
     expect(screen.getByRole('dialog')).toHaveTextContent('No payment will be collected');
     fireEvent.click(screen.getByRole('button', { name: 'Unlock demo report' }));
     expect(onUnlock).toHaveBeenCalledOnce();
-    rerender(<ReportPage name="Sam" result={result} tips={generateTips(result)} unlocked onUnlock={onUnlock} onReset={vi.fn()} />);
+
+    rerender(<ReportPage {...props} unlocked />);
     expect(screen.queryByLabelText('Locked')).not.toBeInTheDocument();
     expect(screen.getByText(/No payment was made/)).toBeInTheDocument();
+    expect(screen.getByText('Your daily glow routine')).toBeInTheDocument();
+  });
+
+  it('toggles the measurement guides over the portrait', () => {
+    render(<ReportPage name="Sam" result={result} report={report} imageUrl="blob:portrait" unlocked={false} onUnlock={vi.fn()} onReset={vi.fn()} />);
+    const toggle = screen.getByRole('button', { name: /Hide guides/ });
+    fireEvent.click(toggle);
+    expect(screen.getByRole('button', { name: /Show guides/ })).toHaveAttribute('aria-pressed', 'false');
   });
 });

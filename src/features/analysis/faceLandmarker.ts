@@ -1,8 +1,10 @@
 import type { FaceLandmarker as FaceLandmarkerType, NormalizedLandmark } from '@mediapipe/tasks-vision';
 import { calculatePresentationScore, framingFromBox } from './analysisRules';
 import { AnalysisError, type AnalysisResult } from './analysis.types';
-import { calculateAppearanceImpressionScore, estimateExpression, estimateFaceShape, estimateFacialSymmetry, estimateFeatureBalance } from './appearanceAnalysis';
+import { calculateHarmonyScore, calculatePotentialScore, estimateExpression, readBlendshapes } from './appearanceAnalysis';
+import { buildFaceFrame, buildOverlay, classifyFaceShape, measureMetrics, measureSymmetry, proportionScore } from './faceGeometry';
 import { getQualityMetrics } from './imageQuality';
+import { getSkinMetrics } from './skinAnalysis';
 
 const WASM_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22-rc.20250304/wasm';
 const DEFAULT_MODEL = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
@@ -49,33 +51,41 @@ export async function analyzeImage(image: HTMLImageElement): Promise<AnalysisRes
   const landmarks = detection.faceLandmarks;
   if (!landmarks.length) throw new AnalysisError('no-face', 'No clear face was found. Try a front-facing photo with even light.');
   if (landmarks.length > 1) throw new AnalysisError('multiple-faces', 'More than one face was found. Choose a photo with one clearly visible person.');
-  const box = boxFromLandmarks(landmarks[0]);
-  const quality = getQualityMetrics(image, image.naturalWidth, image.naturalHeight);
+  const face = landmarks[0];
+  const { naturalWidth: width, naturalHeight: height } = image;
+  const frame = buildFaceFrame(face, width, height);
+  if (!frame) throw new AnalysisError('analysis-failed', 'The face could not be measured. Try another photo.');
+  if (Math.abs(frame.pose.yaw) > 22 || Math.abs(frame.pose.pitch) > 25) throw new AnalysisError('low-quality', 'Your head is turned too far for accurate measurements. Face the camera straight on and retake.');
+  const shapes = readBlendshapes(detection.faceBlendshapes[0]?.categories);
+  if (shapes && shapes.blink > 0.55) throw new AnalysisError('low-quality', 'Your eyes look closed. Retake the portrait with your eyes open.');
+  const box = boxFromLandmarks(face);
+  const quality = getQualityMetrics(image, width, height);
+  const metrics = measureMetrics(frame, { open: (shapes?.jawOpen ?? 0) > 0.25, smiling: (shapes?.smile ?? 0) > 0.45 });
+  const symmetryScore = measureSymmetry(frame);
+  const usableLight = quality.brightnessScore === null || (quality.brightnessScore >= 18 && quality.brightnessScore <= 92);
+  const skin = usableLight ? getSkinMetrics(image, face, width, height) : null;
+  const expression = estimateExpression(shapes);
+  const scoreInputs = { metrics, symmetry: symmetryScore, skin, expression: expression.score };
   const framingScore = framingFromBox(box);
-  const faceShape = estimateFaceShape(landmarks[0], image.naturalWidth, image.naturalHeight);
-  const facialSymmetryScore = estimateFacialSymmetry(landmarks[0], image.naturalWidth);
-  const featureBalanceScore = estimateFeatureBalance(landmarks[0], image.naturalWidth, image.naturalHeight);
-  const expression = estimateExpression(detection.faceBlendshapes[0]?.categories);
-  const base: AnalysisResult = {
+  return {
     faceDetected: true,
     faceCount: 1,
     faceBoundingBox: box,
-    faceCenterX: box.x + box.width / 2,
-    faceCenterY: box.y + box.height / 2,
-    faceOccupancy: box.width * box.height,
-    headYawEstimate: null,
-    headPitchEstimate: null,
     brightnessScore: quality.brightnessScore,
     sharpnessScore: quality.sharpnessScore,
     framingScore,
-    headPositionScore: null,
-    photoPresentationScore: null,
-    faceShape,
-    facialSymmetryScore,
-    featureBalanceScore,
+    photoPresentationScore: calculatePresentationScore({ framingScore, brightnessScore: quality.brightnessScore, sharpnessScore: quality.sharpnessScore, headPositionScore: null }),
+    headPose: frame.pose,
+    faceShape: classifyFaceShape(frame),
+    metrics,
+    mouthMeasured: metrics.some((m) => m.id === 'lipRatio'),
+    proportionScore: proportionScore(metrics),
+    symmetryScore,
+    skin,
     expressionScore: expression.score,
     expressionTone: expression.tone,
-    appearanceImpressionScore: calculateAppearanceImpressionScore(facialSymmetryScore, featureBalanceScore, expression.score),
+    harmonyScore: calculateHarmonyScore(scoreInputs),
+    potentialScore: calculatePotentialScore(scoreInputs),
+    overlay: buildOverlay(face, width, height),
   };
-  return { ...base, photoPresentationScore: calculatePresentationScore(base) };
 }

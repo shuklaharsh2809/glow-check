@@ -1,26 +1,35 @@
 import { describe, expect, it } from 'vitest';
-import type { Category, NormalizedLandmark } from '@mediapipe/tasks-vision';
-import { calculateAppearanceImpressionScore, estimateExpression, estimateFaceShape } from './appearanceAnalysis';
+import type { Category } from '@mediapipe/tasks-vision';
+import { canonicalLandmarks, FIXTURE_SIZE } from '../../test/faceFixture';
+import { calculateHarmonyScore, calculatePotentialScore, estimateExpression, readBlendshapes } from './appearanceAnalysis';
+import { buildFaceFrame, measureMetrics } from './faceGeometry';
 
-describe('appearance analysis', () => {
-  it('classifies a softly proportioned outline as oval', () => {
-    const points: NormalizedLandmark[] = Array.from({ length: 478 }, () => ({ x: .5, y: .5, z: 0, visibility: 1 }));
-    points[10] = { x: .5, y: .2, z: 0, visibility: 1 };
-    points[152] = { x: .5, y: .8, z: 0, visibility: 1 };
-    points[234] = { x: .25, y: .5, z: 0, visibility: 1 };
-    points[454] = { x: .75, y: .5, z: 0, visibility: 1 };
-    points[172] = { x: .3, y: .7, z: 0, visibility: 1 };
-    points[397] = { x: .7, y: .7, z: 0, visibility: 1 };
-    expect(estimateFaceShape(points, 1000, 1000)).toBe('oval');
+const category = (categoryName: string, score: number): Category => ({ categoryName, score, index: 0, displayName: '' });
+const metrics = measureMetrics(buildFaceFrame(canonicalLandmarks(), FIXTURE_SIZE, FIXTURE_SIZE)!);
+
+describe('appearance scoring', () => {
+  it('reads blendshapes and a visible smile as a warm expression', () => {
+    const shapes = readBlendshapes([category('mouthSmileLeft', 0.7), category('mouthSmileRight', 0.8), category('eyeBlinkLeft', 0.1), category('jawOpen', 0.05)]);
+    expect(shapes).toMatchObject({ smile: 0.75, jawOpen: 0.05, blink: 0.05 });
+    expect(estimateExpression(shapes).tone).toBe('warm');
   });
 
-  it('reads a visible smile as a warm expression', () => {
-    const category = (categoryName: string, score: number): Category => ({ categoryName, score, index: 0, displayName: '' });
-    expect(estimateExpression([category('mouthSmileLeft', .7), category('mouthSmileRight', .8)]).tone).toBe('warm');
+  it('does not heavily penalise a neutral face', () => {
+    const neutral = estimateExpression(readBlendshapes([category('mouthSmileLeft', 0), category('mouthSmileRight', 0)]));
+    expect(neutral.tone).toBe('neutral');
+    expect(neutral.score).toBe(80);
   });
 
-  it('requires geometry and keeps the impression score bounded', () => {
-    expect(calculateAppearanceImpressionScore(null, 80, 70)).toBeNull();
-    expect(calculateAppearanceImpressionScore(90, 85, 75)).toBe(86);
+  it('requires proportions and symmetry for a harmony score', () => {
+    expect(calculateHarmonyScore({ metrics: [], symmetry: 90, skin: null, expression: 80 })).toBeNull();
+    expect(calculateHarmonyScore({ metrics, symmetry: null, skin: null, expression: 80 })).toBeNull();
+    const score = calculateHarmonyScore({ metrics, symmetry: 90, skin: null, expression: 80 })!;
+    expect(score).toBeGreaterThan(80);
+    expect(score).toBeLessThanOrEqual(100);
+  });
+
+  it('projects a higher potential when skin and expression can improve', () => {
+    const inputs = { metrics, symmetry: 88, skin: { clarity: 50, evenness: 55, underEye: 60, score: 54 }, expression: 80 };
+    expect(calculatePotentialScore(inputs)!).toBeGreaterThan(calculateHarmonyScore(inputs)!);
   });
 });
